@@ -10,26 +10,24 @@ export const blogRouter = new Hono<{
         JWT_SECRET:   string
     }, 
     Variables:{
-        userId: number
+        userId: number,
     }
 }>();
 
 
 
-blogRouter.use("*", async (c, next) => {
+blogRouter.use("/*", async (c, next) => {
 	const jwt = c.req.header('Authorization');
-	console.log(jwt);
-	
 	if (!jwt) {
 		c.status(401);
 		return c.json({ error: "unauthorized" });
 	}
-	
 	const user = await verify(jwt, c.env.JWT_SECRET);
 	if(user){
-		c.set('userId', user.id)
+		// @ts-ignore
+		c.set("userId",user.id);
 		await next();
-	}else{
+	}else{ 
 	  return c.json({
 		message: "you are not logged in"
 	  })
@@ -92,14 +90,22 @@ blogRouter.put('/:id', async(c)=>{
 
 
 blogRouter.get('/bulk', async(c)=>{
-	const userId= c.get("userId");
+	console.log("bulk entry point");
+	
 	const prisma = new PrismaClient({
 		datasourceUrl: c.env?.DATABASE_URL,
 	}).$extends(withAccelerate());
 	try {
 		const blogs = await prisma.post.findMany({
-			where:{
-				authorId:userId
+			select:{
+				content:true,
+				title:true,
+				id:true,
+				author:{
+					select:{
+						name:true
+					}
+				}
 			}
 		});
 		return c.json({
@@ -117,16 +123,24 @@ blogRouter.get('/bulk', async(c)=>{
 
 blogRouter.get('/:id', async(c)=>{
 	const id = c.req.param("id");
-	const userId=c.get("userId");
 	const prisma = new PrismaClient({
 		datasourceUrl: c.env?.DATABASE_URL,
 	}).$extends(withAccelerate());
 	try {
 		const post = await prisma.post.findFirst({
 			where:{
-				authorId:Number(userId),
 				id: Number(id)
 			},
+			select:{
+				id:true,
+				title:true,
+				content:true,
+				author:{
+					select:{
+						name:true
+					}
+				}
+			}
 		});
 		return c.json({
 			post

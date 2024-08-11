@@ -11,10 +11,14 @@ export const userRouter = new Hono<{
 }>();
 
 userRouter.post('/signup', async(c)=>{
+    console.log("signup pe a gye");
+    
     const prisma = new PrismaClient({
         datasourceUrl: c.env.DATABASE_URL,
     }).$extends(withAccelerate())
+
     const body = await c.req.json();
+    console.log(body);
     const {success}= signupInput.safeParse(body);
     if(!success){
         c.status(411)
@@ -41,10 +45,13 @@ userRouter.post('/signup', async(c)=>{
 })
 
 userRouter.post('/signin', async(c) =>{
+    console.log("hello dkjnbdf");
     const prisma = new PrismaClient({
       datasourceUrl: c.env.DATABASE_URL,
     }).$extends(withAccelerate())
     const body = await c.req.json() 
+    console.log(body);
+    
     const {success}= signinInput.safeParse(body);
     if(!success){
         c.status(411)
